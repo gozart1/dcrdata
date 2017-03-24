@@ -27,8 +27,12 @@ const (
 )
 
 func (c *appContext) StatusCtx(next http.Handler) http.Handler {
+	status := &apitypes.Status{
+		APIVersion:     APIVersion,
+		DcrdataVersion: ver.String(),
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		status := &apitypes.Status{}
 		// When no data yet, BlockData.Height = -1
 		apiLog.Trace(c.BlockData.GetHeight(), c.BlockData != nil)
 		if c.BlockData != nil && c.BlockData.GetHeight() >= 0 {

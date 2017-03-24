@@ -11,15 +11,15 @@ import (
 
 const (
 	// blockConnChanBuffer is the size of the block connected channel buffer.
-	blockConnChanBuffer = 8
+	blockConnChanBuffer = 24
 
 	// newTxChanBuffer is the size of the new transaction channel buffer, for
 	// ANY transactions are added into mempool.
-	newTxChanBuffer = 2000
+	newTxChanBuffer = 4096
 
 	// relevantMempoolTxChanBuffer is the size of the new transaction channel
 	// buffer, for relevant transactions that are added into mempool.
-	relevantMempoolTxChanBuffer = 512
+	relevantMempoolTxChanBuffer = 2048
 )
 
 // Channels are package-level variables for simplicity

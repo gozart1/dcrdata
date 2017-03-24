@@ -80,12 +80,6 @@ func mainCore() int {
 	log.Infof("Connected to dcrd (JSON-RPC API v%s) on %v",
 		nodeVer.String(), curnet.String())
 
-	cerr := registerNodeNtfnHandlers(dcrdClient)
-	if cerr != nil {
-		log.Errorf("RPC client error: %v (%v)", cerr.Error(), cerr.Cause())
-		return 6
-	}
-
 	// Block data collector
 	blockdata.UseLogger(daemonLog)
 	collector := blockdata.NewBlockDataCollector(dcrdClient, activeChain)
@@ -178,7 +172,6 @@ func mainCore() int {
 
 	// Blockchain monitor for the collector
 	wg.Add(1)
-	// If collector is nil, so is connectChan
 	addrMap := make(map[string]txhelpers.TxAction) // for support of watched addresses
 	wsChainMonitor := blockdata.NewChainMonitor(collector, blockDataSavers,
 		quit, &wg, !cfg.PoolValue, addrMap,
@@ -209,10 +202,17 @@ func mainCore() int {
 		mini := time.Duration(cfg.MempoolMinInterval) * time.Second
 		maxi := time.Duration(cfg.MempoolMaxInterval) * time.Second
 
-		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers, ntfnChans.newTxChan,
-			quit, &wg, newTicketLimit, mini, maxi, mpi)
+		mpm := mempool.NewMempoolMonitor(mpoolCollector, mempoolSavers,
+			ntfnChans.newTxChan, quit, &wg, newTicketLimit, mini, maxi, mpi)
 		wg.Add(1)
 		go mpm.TxHandler(dcrdClient)
+	}
+
+	// Register for notifications now that the monitors are listening
+	cerr := registerNodeNtfnHandlers(dcrdClient)
+	if cerr != nil {
+		log.Errorf("RPC client error: %v (%v)", cerr.Error(), cerr.Cause())
+		return 6
 	}
 
 	// wait for resync before serving

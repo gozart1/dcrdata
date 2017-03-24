@@ -4,16 +4,16 @@ import (
 	"github.com/decred/dcrd/dcrjson"
 )
 
-// import (
-// 	"github.com/decred/dcrd/dcrjson"
-// )
-
 // much of the time, dcrdata will be using the types in dcrjson, but others are
 // defined here
 
+// Status indicates the state of the server, including the API version and the
+// software version.
 type Status struct {
-	Ready  bool   `json:"ready"`
-	Height uint32 `json:"height"`
+	Ready          bool   `json:"ready"`
+	Height         uint32 `json:"height"`
+	APIVersion     int    `json:"api_version"`
+	DcrdataVersion string `json:"dcrdata_version"`
 }
 
 // TicketPoolInfo models data about ticket pool
