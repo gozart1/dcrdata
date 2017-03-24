@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
 
 	apitypes "github.com/dcrdata/dcrdata/dcrdataapi"
 	"github.com/decred/dcrd/dcrjson"
@@ -37,13 +38,65 @@ type APIDataSource interface {
 type appContext struct {
 	nodeClient *dcrrpcclient.Client
 	BlockData  APIDataSource
+	Status     apitypes.Status
 }
 
 // Constructor for appContext
 func newContext(client *dcrrpcclient.Client, blockData APIDataSource) *appContext {
+	conns, _ := client.GetConnectionCount()
+	nodeHeight, _ := client.GetBlockCount()
 	return &appContext{
 		nodeClient: client,
 		BlockData:  blockData,
+		Status: apitypes.Status{
+			Height:          uint32(nodeHeight),
+			NodeConnections: conns,
+			APIVersion:      APIVersion,
+			DcrdataVersion:  ver.String(),
+		},
+	}
+}
+
+func (c *appContext) StatusNtfnHandler(wg *sync.WaitGroup, quit chan struct{}) {
+	defer wg.Done()
+out:
+	for {
+	keepon:
+		select {
+		case height, ok := <-ntfnChans.updateStatusNodeHeight:
+			if !ok {
+				log.Warnf("Block connected channel closed.")
+				break out
+			}
+
+			c.Status.Height = height
+
+			var err error
+			c.Status.NodeConnections, err = c.nodeClient.GetConnectionCount()
+			if err != nil {
+				c.Status.Ready = false
+				log.Warn("Failed to get connection count: ", err)
+				break keepon
+			}
+
+			apiLog.Trace(c.BlockData.GetHeight(), c.BlockData != nil)
+			if c.BlockData != nil && c.BlockData.GetHeight() >= 0 {
+				if summary := c.BlockData.GetBestBlockSummary(); summary != nil {
+					apiLog.Trace("have block summary")
+					if summary.Height == uint32(c.BlockData.GetHeight()) {
+						apiLog.Trace("full block data agrees with summary data")
+						c.Status.DBHeight = summary.Height
+						c.Status.Ready = true
+					}
+				}
+			}
+
+		case _, ok := <-quit:
+			if !ok {
+				log.Debugf("Got quit signal. Exiting block connected handler for STATUS monitor.")
+				break out
+			}
+		}
 	}
 }
 
@@ -103,27 +156,27 @@ func writeJSON(w http.ResponseWriter, thing interface{}) {
 }
 
 func (c *appContext) status(w http.ResponseWriter, r *http.Request) {
-	status := getStatusCtx(r)
-	if status == nil {
-		http.Error(w, http.StatusText(422), 422)
-		return
-	}
+	// status := getStatusCtx(r)
+	// if status == nil {
+	// 	http.Error(w, http.StatusText(422), 422)
+	// 	return
+	// }
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(*status); err != nil {
+	if err := json.NewEncoder(w).Encode(c.Status); err != nil {
 		apiLog.Infof("JSON encode error: %v", err)
 	}
 }
 
 func (c *appContext) currentHeight(w http.ResponseWriter, r *http.Request) {
-	status := getStatusCtx(r)
-	if status == nil {
-		http.Error(w, http.StatusText(422), 422)
-		return
-	}
+	// status := getStatusCtx(r)
+	// if status == nil {
+	// 	http.Error(w, http.StatusText(422), 422)
+	// 	return
+	// }
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	if _, err := io.WriteString(w, strconv.Itoa(int(status.Height))); err != nil {
+	if _, err := io.WriteString(w, strconv.Itoa(int(c.Status.Height))); err != nil {
 		apiLog.Infof("failed to write height response: %v", err)
 	}
 }

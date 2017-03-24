@@ -10,10 +10,12 @@ import (
 // Status indicates the state of the server, including the API version and the
 // software version.
 type Status struct {
-	Ready          bool   `json:"ready"`
-	Height         uint32 `json:"height"`
-	APIVersion     int    `json:"api_version"`
-	DcrdataVersion string `json:"dcrdata_version"`
+	Ready           bool   `json:"ready"`
+	DBHeight        uint32 `json:"db_height"`
+	Height          uint32 `json:"node_height"`
+	NodeConnections int64  `json:"node_connections"`
+	APIVersion      int    `json:"api_version"`
+	DcrdataVersion  string `json:"dcrdata_version"`
 }
 
 // TicketPoolInfo models data about ticket pool

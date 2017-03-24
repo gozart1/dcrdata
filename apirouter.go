@@ -27,15 +27,13 @@ func newAPIRouter(app *appContext) apiMux {
 
 	mux.Get("/", app.root)
 
-	mux.With(app.StatusCtx).HandleFunc("/status", app.status)
+	mux.HandleFunc("/status", app.status)
 
 	mux.Route("/block", func(r chi.Router) {
-		//r.Use(app.StatusCtx)
-
 		r.Route("/best", func(rd chi.Router) {
 			rd.Use(app.BlockIndexLatestCtx)
 			rd.Get("/", app.getBlockSummary) // app.getLatestBlock
-			rd.With(app.StatusCtx).Get("/height", app.currentHeight)
+			rd.Get("/height", app.currentHeight)
 			rd.Get("/header", app.getBlockHeader)
 			rd.Get("/pos", app.getBlockStakeInfoExtended)
 		})

@@ -26,6 +26,7 @@ const (
 var ntfnChans struct {
 	connectChan                       chan *chainhash.Hash
 	connectChanStkInf                 chan int32
+	updateStatusNodeHeight            chan uint32
 	spendTxBlockChan, recvTxBlockChan chan *txhelpers.BlockWatchedTx
 	relevantTxMempoolChan             chan *dcrutil.Tx
 	newTxChan                         chan *chainhash.Hash
@@ -43,6 +44,9 @@ func makeNtfnChans(cfg *config) {
 	// Like connectChan for block data, connectChanStkInf is used when a new
 	// block is connected, but to signal the stake info monitor.
 	ntfnChans.connectChanStkInf = make(chan int32, blockConnChanBuffer)
+
+	// To update app status
+	ntfnChans.updateStatusNodeHeight = make(chan uint32, blockConnChanBuffer)
 
 	// watchaddress
 	if len(cfg.WatchAddresses) > 0 {
@@ -66,6 +70,9 @@ func closeNtfnChans() {
 	}
 	if ntfnChans.connectChanStkInf != nil {
 		close(ntfnChans.connectChanStkInf)
+	}
+	if ntfnChans.updateStatusNodeHeight != nil {
+		close(ntfnChans.updateStatusNodeHeight)
 	}
 
 	if ntfnChans.newTxChan != nil {

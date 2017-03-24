@@ -153,6 +153,7 @@ func InitDB(dbInfo *DBInfo) (*DB, error) {
 
 type DBDataSaver struct {
 	*DB
+	updateStatusChan chan uint32
 }
 
 // Store satisfies the blockdata.BlockDataSaver interface
@@ -165,6 +166,11 @@ func (db *DBDataSaver) Store(data *blockdata.BlockData) error {
 	err := db.DB.StoreBlockSummary(&summary)
 	if err != nil {
 		return err
+	}
+
+	select {
+	case db.updateStatusChan <- summary.Height:
+	default:
 	}
 
 	stakeInfoExtended := data.ToStakeInfoExtended()

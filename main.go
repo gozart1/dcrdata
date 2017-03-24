@@ -71,6 +71,19 @@ func mainCore() int {
 		return 4
 	}
 
+	defer func() {
+		// Closing these channels should be unnecessary if quit was handled right
+		closeNtfnChans()
+
+		if dcrdClient != nil {
+			log.Infof("Closing connection to dcrd.")
+			dcrdClient.Shutdown()
+		}
+
+		log.Infof("Bye!")
+		time.Sleep(250 * time.Millisecond)
+	}()
+
 	// Display connected network
 	curnet, err := dcrdClient.GetCurrentNet()
 	if err != nil {
@@ -111,7 +124,8 @@ func mainCore() int {
 	dcrsqlite.UseLogger(sqliteLog)
 	dbInfo := dcrsqlite.DBInfo{FileName: cfg.DBFileName}
 	//sqliteDB, err := dcrsqlite.InitDB(&dbInfo)
-	sqliteDB, err := dcrsqlite.InitWiredDB(&dbInfo, dcrdClient, activeChain)
+	sqliteDB, err := dcrsqlite.InitWiredDB(&dbInfo,
+		ntfnChans.updateStatusNodeHeight, dcrdClient, activeChain)
 	if err != nil {
 		log.Errorf("Unable to initialize SQLite database: %v", err)
 		return 16
@@ -167,6 +181,15 @@ func mainCore() int {
 		return 15
 	}
 
+	// wait for resync before serving
+	waitSync.Wait()
+
+	select {
+	case <-quit:
+		return 20
+	default:
+	}
+
 	// WaitGroup for the monitor goroutines
 	var wg sync.WaitGroup
 
@@ -208,6 +231,12 @@ func mainCore() int {
 		go mpm.TxHandler(dcrdClient)
 	}
 
+	select {
+	case <-quit:
+		return 20
+	default:
+	}
+
 	// Register for notifications now that the monitors are listening
 	cerr := registerNodeNtfnHandlers(dcrdClient)
 	if cerr != nil {
@@ -215,46 +244,30 @@ func mainCore() int {
 		return 6
 	}
 
-	// wait for resync before serving
-	waitSync.Wait()
+	// Start web API
+	app := newContext(dcrdClient, &sqliteDB)
+	wg.Add(1)
+	go app.StatusNtfnHandler(&wg, quit)
+	apiMux := newAPIRouter(app)
 
-	// Start web API, unless resync was canceled
-	select {
-	case <-quit:
-	default:
-		app := newContext(dcrdClient, &sqliteDB)
-		apiMux := newAPIRouter(app)
+	webMux := chi.NewRouter()
+	webMux.Get("/", webUI.RootPage)
+	webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./public/images/favicon.ico")
+	})
+	webMux.FileServer("/js", http.Dir("./public/js"))
+	webMux.FileServer("/css", http.Dir("./public/css"))
+	webMux.FileServer("/fonts", http.Dir("./public/fonts"))
+	webMux.FileServer("/images", http.Dir("./public/images"))
+	webMux.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, r.URL.RequestURI()+" ain't no country I've ever heard of! (404)", http.StatusNotFound)
+	})
+	webMux.Mount("/api", apiMux.Mux)
 
-		webMux := chi.NewRouter()
-		webMux.Get("/", webUI.RootPage)
-		webMux.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "./public/images/favicon.ico")
-		})
-		webMux.FileServer("/js", http.Dir("./public/js"))
-		webMux.FileServer("/css", http.Dir("./public/css"))
-		webMux.FileServer("/fonts", http.Dir("./public/fonts"))
-		webMux.FileServer("/images", http.Dir("./public/images"))
-		webMux.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, r.URL.RequestURI()+" ain't no country I've ever heard of! (404)", http.StatusNotFound)
-		})
-		webMux.Mount("/api", apiMux.Mux)
+	listenAndServeProto(cfg.APIListen, cfg.APIProto, webMux)
 
-		listenAndServeProto(cfg.APIListen, cfg.APIProto, webMux)
-	}
-
-	// Wait for handlers to quit
+	// Wait for notification handlers to quit
 	wg.Wait()
-
-	// Closing these channels should be unnecessary if quit was handled right
-	closeNtfnChans()
-
-	if dcrdClient != nil {
-		log.Infof("Closing connection to dcrd.")
-		dcrdClient.Shutdown()
-	}
-
-	log.Infof("Bye!")
-	time.Sleep(250 * time.Millisecond)
 
 	return 0
 }

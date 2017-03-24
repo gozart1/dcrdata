@@ -21,22 +21,22 @@ type wiredDB struct {
 	params *chaincfg.Params
 }
 
-func NewWiredDB(db *sql.DB, cl *dcrrpcclient.Client, p *chaincfg.Params) wiredDB {
+func NewWiredDB(db *sql.DB, statusC chan uint32, cl *dcrrpcclient.Client, p *chaincfg.Params) wiredDB {
 	return wiredDB{
-		DBDataSaver: &DBDataSaver{NewDB(db)},
+		DBDataSaver: &DBDataSaver{NewDB(db), statusC},
 		MPC:         new(mempool.MempoolDataCache),
 		client:      cl,
 		params:      p,
 	}
 }
 
-func InitWiredDB(dbInfo *DBInfo, cl *dcrrpcclient.Client, p *chaincfg.Params) (wiredDB, error) {
+func InitWiredDB(dbInfo *DBInfo, statusC chan uint32, cl *dcrrpcclient.Client, p *chaincfg.Params) (wiredDB, error) {
 	db, err := InitDB(dbInfo)
 	if err != nil {
 		return wiredDB{}, err
 	}
 	return wiredDB{
-		DBDataSaver: &DBDataSaver{db},
+		DBDataSaver: &DBDataSaver{db, statusC},
 		MPC:         new(mempool.MempoolDataCache),
 		client:      cl,
 		params:      p,
