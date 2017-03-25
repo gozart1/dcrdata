@@ -27,6 +27,7 @@ var ntfnChans struct {
 	connectChan                       chan *chainhash.Hash
 	connectChanStkInf                 chan int32
 	updateStatusNodeHeight            chan uint32
+	updateStatusDBHeight              chan uint32
 	spendTxBlockChan, recvTxBlockChan chan *txhelpers.BlockWatchedTx
 	relevantTxMempoolChan             chan *dcrutil.Tx
 	newTxChan                         chan *chainhash.Hash
@@ -47,6 +48,7 @@ func makeNtfnChans(cfg *config) {
 
 	// To update app status
 	ntfnChans.updateStatusNodeHeight = make(chan uint32, blockConnChanBuffer)
+	ntfnChans.updateStatusDBHeight = make(chan uint32, blockConnChanBuffer)
 
 	// watchaddress
 	if len(cfg.WatchAddresses) > 0 {
@@ -73,6 +75,9 @@ func closeNtfnChans() {
 	}
 	if ntfnChans.updateStatusNodeHeight != nil {
 		close(ntfnChans.updateStatusNodeHeight)
+	}
+	if ntfnChans.updateStatusDBHeight != nil {
+		close(ntfnChans.updateStatusDBHeight)
 	}
 
 	if ntfnChans.newTxChan != nil {

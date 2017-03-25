@@ -79,17 +79,38 @@ out:
 				break keepon
 			}
 
-			apiLog.Trace(c.BlockData.GetHeight(), c.BlockData != nil)
-			if c.BlockData != nil && c.BlockData.GetHeight() >= 0 {
-				if summary := c.BlockData.GetBestBlockSummary(); summary != nil {
-					apiLog.Trace("have block summary")
-					if summary.Height == uint32(c.BlockData.GetHeight()) {
-						apiLog.Trace("full block data agrees with summary data")
-						c.Status.DBHeight = summary.Height
-						c.Status.Ready = true
-					}
-				}
+		case height, ok := <-ntfnChans.updateStatusDBHeight:
+			if !ok {
+				log.Warnf("Block connected channel closed.")
+				break out
 			}
+
+			if c.BlockData == nil {
+				panic("BlockData APIDataSource is nil")
+			}
+
+			summary := c.BlockData.GetBestBlockSummary()
+			if summary == nil {
+				log.Errorf("BlockData summary is nil")
+				break keepon
+			}
+
+			bdHeight := c.BlockData.GetHeight()
+			if bdHeight >= 0 && summary.Height == uint32(bdHeight) &&
+				height == uint32(bdHeight) {
+				c.Status.DBHeight = height
+				// if DB height agrees with node height, then we're ready
+				if c.Status.Height == height {
+					c.Status.Ready = true
+				} else {
+					c.Status.Ready = false
+				}
+				break keepon
+			}
+
+			c.Status.Ready = false
+			log.Errorf("New DB height (%d) and stored block data (%d, %d) not consistent.",
+				height, bdHeight, summary.Height)
 
 		case _, ok := <-quit:
 			if !ok {

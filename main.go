@@ -125,7 +125,7 @@ func mainCore() int {
 	dbInfo := dcrsqlite.DBInfo{FileName: cfg.DBFileName}
 	//sqliteDB, err := dcrsqlite.InitDB(&dbInfo)
 	sqliteDB, err := dcrsqlite.InitWiredDB(&dbInfo,
-		ntfnChans.updateStatusNodeHeight, dcrdClient, activeChain)
+		ntfnChans.updateStatusDBHeight, dcrdClient, activeChain)
 	if err != nil {
 		log.Errorf("Unable to initialize SQLite database: %v", err)
 		return 16
@@ -246,8 +246,12 @@ func mainCore() int {
 
 	// Start web API
 	app := newContext(dcrdClient, &sqliteDB)
+	// Start notification hander to keep /status up-to-date
 	wg.Add(1)
 	go app.StatusNtfnHandler(&wg, quit)
+	// Initial setting of db_height. Subsequently, Store() will send this.
+	ntfnChans.updateStatusDBHeight <- uint32(sqliteDB.GetHeight())
+
 	apiMux := newAPIRouter(app)
 
 	webMux := chi.NewRouter()
