@@ -110,7 +110,8 @@ type Address struct {
 	Transactions []*AddressTxShort `json:"address transactions"`
 }
 
-//AddressTxRaw is modeled from SearchRawTransactionsResult but with size in place of hex
+// AddressTxRaw is modeled from SearchRawTransactionsResult but with size in
+// place of hex
 type AddressTxRaw struct {
 	Size          int32                `json:"size"`
 	TxID          string               `json:"txid"`
@@ -124,16 +125,16 @@ type AddressTxRaw struct {
 	Blocktime     int64                `json:"blocktime,omitempty"`
 }
 
-//AddressTxShort is a subset of AddressTx with just the basic tx details pertaining the
-//particular address
+// AddressTxShort is a subset of AddressTxRaw with just the basic tx details
+// pertaining the particular address
 type AddressTxShort struct {
 	TxID   string           `json:"txid"`
 	Time   int64            `json:"time"`
 	Values []AddressTxValue `json:"values"`
 }
 
-//AddressTxValue contains the amount involved and type of value (in / out) for an
-//address in a transaction
+// AddressTxValue contains the amount involved and type of value (in / out) for
+// an address in a transaction
 type AddressTxValue struct {
 	ValueType string  `json:"value type"`
 	Amount    float64 `json:"amount"`

@@ -904,7 +904,7 @@ func (c *appContext) getAddressTransactions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if count == -1 {
-		count = 1
+		count = 1000000
 	}
 	txs := c.BlockData.GetAddressTransactions(address, count)
 	writeJSON(w, txs, c.getIndentQuery(r))
@@ -918,7 +918,7 @@ func (c *appContext) getAddressTransactionsRaw(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if count == -1 {
-		count = 10
+		count = 1000000
 	}
 	txs := c.BlockData.GetAddressTransactionsRaw(address, count)
 	writeJSON(w, txs, c.getIndentQuery(r))

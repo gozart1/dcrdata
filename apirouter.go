@@ -127,12 +127,13 @@ func newAPIRouter(app *appContext, userRealIP bool) apiMux {
 	mux.Route("/address", func(r chi.Router) {
 		r.Route("/{address}", func(rd chi.Router) {
 			rd.Use(AddressPathCtx)
+			rd.Use(middleware.Compress(1))
 			rd.Get("/", app.getAddressTransactions)
-			rd.With((middleware.Compress(1))).Get("/raw", app.getAddressTransactionsRaw)
+			rd.Get("/raw", app.getAddressTransactionsRaw)
 			rd.Route("/count/{N}", func(ri chi.Router) {
 				ri.Use(NPathCtx)
 				ri.Get("/", app.getAddressTransactions)
-				ri.With((middleware.Compress(1))).Get("/raw", app.getAddressTransactionsRaw)
+				ri.Get("/raw", app.getAddressTransactionsRaw)
 			})
 		})
 	})

@@ -16,7 +16,7 @@
             <h4><span>Transactions</span></h4>
             {{range .Transactions}}
             <p class="bg-info" style="background-color:#2971FF;padding:15px;"> 
-                Transaction ID: {{.TxID}} <br>
+                Transaction ID: <a href="../tx/{{.TxID}}">{{.TxID}}</a> <br>
                 {{range .Values}}
                 Value Type: {{.ValueType}} <br>
                 Amount: {{.Amount}}<br>

@@ -496,7 +496,7 @@ func (db *wiredDB) GetAddressTransactions(addr string, count int) *apitypes.Addr
 			}
 		}
 		for j := range txs[i].Vout {
-			for c := range txs[i].Vin[j].PrevOut.Addresses {
+			for c := range txs[i].Vout[j].ScriptPubKey.Addresses {
 				if txs[i].Vout[j].ScriptPubKey.Addresses[c] == addr {
 					txarray = append(txarray, apitypes.AddressTxValue{
 						ValueType: "Vout",
