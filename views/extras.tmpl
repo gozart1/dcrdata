@@ -30,56 +30,75 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
     <style>
-        a {
+        html {
+            color: #5f5f5f;
+        }
+        .top-nav {
+            background: #3B3F45;
+        }
+        .top-nav a{
             color: white;
-            text-decoration: underline;
         }
-        .copy-btn {
-            background-color: #2971FF;
-            border: none;
-            padding: 0 0;
+        h4 {
+            margin-top: 10px;
         }
-        .copy-btn img {
-            width: 10px;
+        .hash {
+            font-family: monospace;
+            display: inline-block;
+            word-wrap: break-word;
+            transition: .133s transform;
         }
+        .table th {
+            font-size: 12px;
+        }
+        .table td {
+            height: 36px;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+        .hash.collapse {
+            font-size: 10px;
+            display: inline-block;
+            width: 198px;
+        }
+        @media only screen and (max-width: 940px)  {
+            .hash.collapse {
+                font-size: 10px;
+                width: 142px;
+            }
+        }
+        @media only screen and (max-width: 768px)  {
+            .hash.collapse {
+                font-size: 12px;
+            }
+            .table {
+                margin-bottom: 0;
+                width: 100%;
+            }
+            .table td:first-child {
+                width: 140px;
+            }
+        }
+        @media only screen and (max-width: 630px)  {
+            .table .hash {
+                font-size: 10px;
+                width: 198px;
+            }
+        }
+    </style>
+
     </style>
 </head>
 {{end}}
 
 {{define "navbar"}}
-<script>
-        new Clipboard('.copy_btn');
-</script>
-<nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container wrapper">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="/">
-                    <svg class="svg-logo">
-                        <use xlink:href="/images/sprites.svg#svg-decred-logo" />
-                    </svg>
-                </a>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><a href="https://github.com/dcrdata/dcrdata" title="dcrdata on GitHub" target="_blank">GitHub</a></li>
-                    <li><a href="https://github.com/dcrdata/dcrdata#json-rest-api" title="API Endpoints" target="_blank">API</a></li>
-                    <li><a href="/api/status" title="API Status" target="_blank">API Status</a></li>
-                    <li><a href="/explorer" title="Explorer">Explore</a></li>
-                </ul>
-            </div>
-            <!--/.nav-collapse -->
-        </div>
-    </nav>
-{{end}}
-
-{{ define "copyButton"}}
-<button class="copy-btn" data-clipboard-text="{{.}}">
-        <img src="/images/copy.png" alt="Copy to clipboard" style="width: 13px;">
-</button>
+<div class="col-md-12">
+    <div class="row top-nav">
+        <div class="col"><a href="/">Home</a></div>
+        <div class="col"><a href="https://github.com/dcrdata/dcrdata" title="dcrdata on GitHub" target="_blank">GitHub</a></div>
+        <div class="col"><a href="https://github.com/dcrdata/dcrdata#json-rest-api" title="API Endpoints" target="_blank">API</a></div>
+        <div class="col"><a href="/api/status" title="API Status" target="_blank">Status</a></div>
+        <div class="col"><a href="/explorer" title="Explorer">Explore</a></div>
+    </div>
+</div>
 {{end}}
