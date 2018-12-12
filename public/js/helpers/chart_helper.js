@@ -20,3 +20,19 @@ export function barChartPlotter (e) {
     ctx.strokeRect(x, p.canvasy, barWidth, height)
   })
 }
+
+// ensureDygraph checks for Dygraph and imports if necessary
+// before executing the callback
+export function ensureDygraph (callback, fail) {
+  if (typeof window.Dygraph !== 'undefined') {
+    callback()
+  } else {
+    import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js').then(module => {
+      window.Dygraph = module.default
+      callback()
+    }).catch(fail || function (error) {
+      console.error('Failed to fetch Dygraph.')
+      console.error(error)
+    })
+  }
+}

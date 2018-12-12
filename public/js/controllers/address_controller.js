@@ -1,9 +1,10 @@
-/* global Dygraph */
 /* global $ */
 import { Controller } from 'stimulus'
 import { isEmpty } from 'lodash-es'
-import { barChartPlotter } from '../helpers/chart_helper'
+import { barChartPlotter, ensureDygraph } from '../helpers/chart_helper'
 import globalEventBus from '../services/event_bus_service'
+
+var Dygraph
 
 function txTypesFunc (d) {
   var p = []
@@ -108,7 +109,8 @@ export default class extends Controller {
         _this.setTxnCountText(el, transactions)
       })
     })
-    $.getScript('/js/vendor/dygraphs.min.js', () => {
+    ensureDygraph(() => {
+      Dygraph = window.Dygraph
       _this.typesGraphOptions = {
         labels: ['Date', 'Sending (regular)', 'Receiving (regular)', 'Tickets', 'Votes', 'Revocations'],
         colors: ['#69D3F5', '#2971FF', '#41BF53', 'darkorange', '#FF0090'],
