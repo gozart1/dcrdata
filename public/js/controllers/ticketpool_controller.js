@@ -1,11 +1,9 @@
 /* global $ */
 import { Controller } from 'stimulus'
 import ws from '../services/messagesocket_service'
-import { barChartPlotter, ensureDygraph } from '../helpers/chart_helper'
-import ajax from '../helpers/ajax_helper'
-
-var Dygraph = window.Dygraph
-var Chart = window.Chart
+import { barChartPlotter } from '../helpers/chart_helper'
+import { getDefault } from '../helpers/module_helper'
+import axios from 'axios'
 
 // Common code for ploting dygraphs
 function legendFormatter (data) {
@@ -112,9 +110,8 @@ export default class extends Controller {
     return [ 'zoom', 'bars', 'age', 'wrapper' ]
   }
 
-  initialize () {
+  async initialize () {
     var controller = this
-    controller.processData = controller._processData.bind(controller)
     controller.mempool = false
     controller.tipHeight = 0
     controller.purchasesGraph = null
@@ -127,29 +124,19 @@ export default class extends Controller {
     }
     controller.zoom = 'day'
     controller.bars = 'all'
-    ensureDygraph(() => {
-      Dygraph = window.Dygraph
-      controller.chartCount += 2
-      controller.purchasesGraph = controller.makePurchasesGraph()
-      controller.priceGraph = controller.makePriceGraph()
-    })
 
-    let success = () => {
-      controller.chartCount += 1
-      controller.outputsGraph = controller.makeOutputsGraph()
-    }
+    let Dygraph = await getDefault(
+      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
+    )
+    controller.chartCount += 2
+    controller.purchasesGraph = controller.makePurchasesGraph(Dygraph)
+    controller.priceGraph = controller.makePriceGraph(Dygraph)
 
-    if (typeof Chart !== 'undefined') {
-      success()
-    } else {
-      import(/* webpackChunkName: "charts" */ '../vendor/charts.min.js').then(module => {
-        Chart = window.Chart = module.default
-        success()
-      }).catch((error) => {
-        console.error('Failed to fetch Charts.')
-        console.error(error)
-      })
-    }
+    let Chart = await getDefault(
+      import(/* webpackChunkName: "charts" */ '../vendor/charts.min.js')
+    )
+    controller.chartCount += 1
+    controller.outputsGraph = controller.makeOutputsGraph(Chart)
   }
 
   connect () {
@@ -169,15 +156,15 @@ export default class extends Controller {
     controller.fetchAll()
   }
 
-  fetchAll () {
+  async fetchAll () {
     var controller = this
     controller.wrapperTarget.classList.add('loading')
-    ajax('/api/ticketpool/charts', controller.processData, () => {
-      controller.wrapperTarget.classList.remove('loading')
-    })
+    let response = await axios.get('/api/ticketpool/charts')
+    controller.processData(response.data)
+    controller.wrapperTarget.classList.remove('loading')
   }
 
-  _processData (data) {
+  processData (data) {
     var controller = this
     if (data['mempool']) {
       // If mempool data is included, assume the data height is the tip.
@@ -234,14 +221,14 @@ export default class extends Controller {
     $(e.target).addClass('btn-active')
     controller.wrapperTarget.classList.add('loading')
     var url = '/api/ticketpool/bydate/' + controller.bars
-    ajax(url, (data) => {
-      controller.purchasesGraph.updateOptions({ 'file': purchasesGraphData(data['time_chart']) })
-    }, () => {
-      controller.wrapperTarget.classList.remove('loading')
+    let response = axios.get(url)
+    controller.purchasesGraph.updateOptions({
+      'file': purchasesGraphData(response.data['time_chart'])
     })
+    controller.wrapperTarget.classList.remove('loading')
   }
 
-  makePurchasesGraph () {
+  makePurchasesGraph (Dygraph) {
     var d = this.graphData['price_chart'] || [[0, 0, 0, 0, 0]]
     var p = {
       labels: ['Date', 'Mempool Tickets', 'Immature Tickets', 'Live Tickets', 'Ticket Value'],
@@ -263,7 +250,7 @@ export default class extends Controller {
     )
   }
 
-  makePriceGraph () {
+  makePriceGraph (Dygraph) {
     var d = this.graphData['price_chart'] || [[0, 0, 0, 0]]
     var p = {
       labels: ['Price', 'Mempool Tickets', 'Immature Tickets', 'Live Tickets'],
@@ -278,7 +265,7 @@ export default class extends Controller {
     )
   }
 
-  makeOutputsGraph () {
+  makeOutputsGraph (Chart) {
     var d = this.graphData['donut_chart'] || []
     return new Chart(
       document.getElementById('doughnutGraph'), {

@@ -1,10 +1,9 @@
 /* global $ */
 import { Controller } from 'stimulus'
 import { isEmpty } from 'lodash-es'
-import { barChartPlotter, ensureDygraph } from '../helpers/chart_helper'
+import { barChartPlotter } from '../helpers/chart_helper'
 import globalEventBus from '../services/event_bus_service'
-
-var Dygraph
+import { getDefault } from '../helpers/module_helper'
 
 function txTypesFunc (d) {
   var p = []
@@ -64,32 +63,18 @@ function customizedFormatter (data) {
   return html
 }
 
-function plotGraph (processedData, otherOptions) {
-  var commonOptions = {
-    digitsAfterDecimal: 8,
-    showRangeSelector: true,
-    legend: 'follow',
-    xlabel: 'Date',
-    fillAlpha: 0.9,
-    labelsKMB: true
-  }
-
-  return new Dygraph(
-    document.getElementById('history-chart'),
-    processedData,
-    { ...commonOptions, ...otherOptions }
-  )
-}
-
 export default class extends Controller {
   static get targets () {
     return ['options', 'addr', 'btns', 'unspent',
       'flow', 'zoom', 'interval', 'numUnconfirmed', 'formattedTime', 'txnCount']
   }
 
-  initialize () {
+  async initialize () {
     var _this = this
     let isFirstFire = true
+    this.Dygraph = await getDefault(
+      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
+    )
     globalEventBus.on('BLOCK_RECEIVED', function (data) {
       // The update of the Time UTC and transactions count will only happen during the first confirmation
       if (!isFirstFire) {
@@ -109,55 +94,53 @@ export default class extends Controller {
         _this.setTxnCountText(el, transactions)
       })
     })
-    ensureDygraph(() => {
-      Dygraph = window.Dygraph
-      _this.typesGraphOptions = {
-        labels: ['Date', 'Sending (regular)', 'Receiving (regular)', 'Tickets', 'Votes', 'Revocations'],
-        colors: ['#69D3F5', '#2971FF', '#41BF53', 'darkorange', '#FF0090'],
-        ylabel: 'Number of Transactions by Type',
-        title: 'Transactions Types',
-        visibility: [true, true, true, true, true],
-        legendFormatter: formatter,
-        plotter: barChartPlotter,
-        stackedGraph: true,
-        fillGraph: false
-      }
 
-      _this.amountFlowGraphOptions = {
-        labels: ['Date', 'Received', 'Spent', 'Net Received', 'Net Spent'],
-        colors: ['#2971FF', '#2ED6A1', '#41BF53', '#FF0090'],
-        ylabel: 'Total Amount (DCR)',
-        title: 'Sent And Received',
-        visibility: [true, false, false, false],
-        legendFormatter: customizedFormatter,
-        plotter: barChartPlotter,
-        stackedGraph: true,
-        fillGraph: false
-      }
+    _this.typesGraphOptions = {
+      labels: ['Date', 'Sending (regular)', 'Receiving (regular)', 'Tickets', 'Votes', 'Revocations'],
+      colors: ['#69D3F5', '#2971FF', '#41BF53', 'darkorange', '#FF0090'],
+      ylabel: 'Number of Transactions by Type',
+      title: 'Transactions Types',
+      visibility: [true, true, true, true, true],
+      legendFormatter: formatter,
+      plotter: barChartPlotter,
+      stackedGraph: true,
+      fillGraph: false
+    }
 
-      _this.unspentGraphOptions = {
-        labels: ['Date', 'Unspent'],
-        colors: ['#41BF53'],
-        ylabel: 'Cummulative Unspent Amount (DCR)',
-        title: 'Total Unspent',
-        plotter: [Dygraph.Plotters.linePlotter, Dygraph.Plotters.fillPlotter],
-        legendFormatter: customizedFormatter,
-        stackedGraph: false,
-        visibility: [true],
-        fillGraph: true
-      }
+    _this.amountFlowGraphOptions = {
+      labels: ['Date', 'Received', 'Spent', 'Net Received', 'Net Spent'],
+      colors: ['#2971FF', '#2ED6A1', '#41BF53', '#FF0090'],
+      ylabel: 'Total Amount (DCR)',
+      title: 'Sent And Received',
+      visibility: [true, false, false, false],
+      legendFormatter: customizedFormatter,
+      plotter: barChartPlotter,
+      stackedGraph: true,
+      fillGraph: false
+    }
 
-      _this.defaultHash = 'list-view'
-      var hashVal = window.location.hash.replace('#', '') || _this.defaultHash
+    _this.unspentGraphOptions = {
+      labels: ['Date', 'Unspent'],
+      colors: ['#41BF53'],
+      ylabel: 'Cummulative Unspent Amount (DCR)',
+      title: 'Total Unspent',
+      plotter: [this.Dygraph.Plotters.linePlotter, this.Dygraph.Plotters.fillPlotter],
+      legendFormatter: customizedFormatter,
+      stackedGraph: false,
+      visibility: [true],
+      fillGraph: true
+    }
 
-      if (hashVal.length === 0 || hashVal === _this.defaultHash) {
-        window.history.pushState({}, this.addr, '#' + _this.defaultHash)
-      } else {
-        var selectedVal = this.optionsTarget.namedItem(hashVal)
-        $(this.optionsTarget).val((selectedVal ? selectedVal.value : 'types'))
-        this.changeView()
-      }
-    })
+    _this.defaultHash = 'list-view'
+    var hashVal = window.location.hash.replace('#', '') || _this.defaultHash
+
+    if (hashVal.length === 0 || hashVal === _this.defaultHash) {
+      window.history.pushState({}, this.addr, '#' + _this.defaultHash)
+    } else {
+      var selectedVal = this.optionsTarget.namedItem(hashVal)
+      $(this.optionsTarget).val((selectedVal ? selectedVal.value : 'types'))
+      this.changeView()
+    }
   }
 
   setTxnCountText (el, count) {
@@ -204,8 +187,7 @@ export default class extends Controller {
     $.ajax({
       type: 'GET',
       url: '/api/address/' + _this.addr + '/' + graphType + '/' + interval,
-      beforeSend: function () {},
-      success: function (data) {
+      success: (data) => {
         if (!isEmpty(data)) {
           var newData = []
           var options = {}
@@ -229,7 +211,7 @@ export default class extends Controller {
           }
 
           if (_this.graph === undefined) {
-            _this.graph = plotGraph(newData, options)
+            _this.graph = this.plotGraph(newData, options)
           } else {
             _this.graph.updateOptions({
               ...{ 'file': newData },
@@ -249,24 +231,39 @@ export default class extends Controller {
     })
   }
 
+  plotGraph (processedData, otherOptions) {
+    var commonOptions = {
+      digitsAfterDecimal: 8,
+      showRangeSelector: true,
+      legend: 'follow',
+      xlabel: 'Date',
+      fillAlpha: 0.9,
+      labelsKMB: true
+    }
+    return new this.Dygraph(
+      document.getElementById('history-chart'),
+      processedData,
+      { ...commonOptions, ...otherOptions }
+    )
+  }
+
   changeView (e) {
     $('.addr-btn').removeClass('btn-active')
     $(e ? e.srcElement : '.chart').addClass('btn-active')
 
-    var _this = this
-    _this.disableBtnsIfNotApplicable()
+    this.disableBtnsIfNotApplicable()
 
     $('body').addClass('loading')
 
     var divHide = 'list'
-    var divShow = _this.btns
+    var divShow = this.btns
 
     if (divShow !== 'chart') {
       divHide = 'chart'
       $('body').removeClass('loading')
-      window.history.pushState({}, this.addr, '#' + _this.defaultHash)
+      window.history.pushState({}, this.addr, '#' + this.defaultHash)
     } else {
-      _this.drawGraph()
+      this.drawGraph()
     }
 
     $('.' + divShow + '-display').removeClass('d-hide')
