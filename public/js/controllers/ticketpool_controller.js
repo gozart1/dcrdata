@@ -124,16 +124,12 @@ export default class extends Controller {
     this.zoom = 'day'
     this.bars = 'all'
 
-    let Dygraph = await getDefault(
-      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
-    )
+    let Dygraph = await getDefault('dygraph')
     this.chartCount += 2
     this.purchasesGraph = this.makePurchasesGraph(Dygraph)
     this.priceGraph = this.makePriceGraph(Dygraph)
 
-    let Chart = await getDefault(
-      import(/* webpackChunkName: "charts" */ '../vendor/charts.min.js')
-    )
+    let Chart = await getDefault('charts')
     this.chartCount += 1
     this.outputsGraph = this.makeOutputsGraph(Chart)
   }

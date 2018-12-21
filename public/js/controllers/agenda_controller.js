@@ -69,9 +69,7 @@ export default class extends Controller {
   async connect () {
     this.agendaId = this.data.get('id')
     this.element.classList.add('loading')
-    this.Dygraph = await getDefault(
-      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
-    )
+    this.Dygraph = await getDefault('dygraph')
     this.drawCharts()
     let agendaResponse = await axios.get('/api/agenda/' + this.agendaId)
     this.cumulativeVoteChoicesChart.updateOptions({

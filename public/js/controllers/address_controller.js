@@ -232,9 +232,7 @@ export default class extends Controller {
         ctrl.fetchGraphData(ctrl.chartType, ctrl.getBin())
       }
     }
-    Dygraph = Dygraph || await getDefault(
-      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
-    )
+    Dygraph = Dygraph || await getDefault('dygraph')
     initializeChart()
     setTimeout(ctrl.updateView, 0)
   }
@@ -298,9 +296,7 @@ export default class extends Controller {
     if (this.qrCode) {
       this.qrImg.css({ opacity: 1 })
     } else {
-      let QRCode = await getDefault(
-        import(/* webpackChunkName: "qrcode" */ 'qrcode')
-      )
+      let QRCode = await getDefault('qrcode')
       let qrCodeImg = await QRCode.toDataURL(this.dcrAddress,
         {
           errorCorrectionLevel: 'H',

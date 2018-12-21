@@ -161,9 +161,7 @@ export default class extends Controller {
   }
 
   async connect () {
-    Dygraph = await getDefault(
-      import(/* webpackChunkName: "dygraphs" */ '../vendor/dygraphs.min.js')
-    )
+    Dygraph = await getDefault('dygraph')
     this.drawInitialGraph()
     $(document).on('nightMode', (event, params) => {
       this.chartsView.updateOptions(
