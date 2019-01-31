@@ -42,7 +42,7 @@ function mempoolTableRow (tx) {
     </td>
     <td>${tx.Type}</td>
     <td>${humanize.threeSigFigs(tx.total || 0, false, 8)}</td>
-    <td class="d-none d-sm-table-cell d-md-none d-lg-table-cell">${tx.size} B</td>
+    <td>${tx.size} B</td>
     <td class="text-right pr-3 home-bl-age" data-target="time.age" data-age="${tx.time}">${humanize.timeSince(tx.time)}</td>
   </tr>`
   dompurify.sanitize(tbody, { IN_PLACE: true })

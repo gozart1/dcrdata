@@ -4,7 +4,7 @@
 
 {{ template "html-head" "Decred Block Explorer by dcrdata.org"}}
 
-<body class="{{ theme }}">
+<body class="{{ theme }} home-body">
     {{ template "navbar" . }}
     <div class="container main" data-controller="time blocklist homepage">
         <!-- <div class="text-left mx-1 pl-1 pb-1">{{.NetName}}</div> -->
@@ -13,48 +13,56 @@
 
 
                 <div class="col-md-15 p-0">
-                    <div class="pt-1 pb-1 px-2 bg-white mb-1">
+                    <div class="py-1 px-2 bg-white mx-1 my-2">
 
                         <div class="d-inline-block position-relative mt-1 p-2">
-                            <span class="card-icon dcricon-twoblocks h1 mr-2"></span> <a href="/blocks" class="h3">Latest {{.NetName}} Blocks</a>
+                            <span class="card-icon d-inline-block dcricon-twoblocks h1 px-2"></span> <a href="/blocks" class="h3">Latest {{.NetName}} Blocks</a>
                         </div>
 
-                        <div class="row">
+                        <div class="row justify-content-between">
                             {{with .BestBlock}}
-                            <div class="col-6 text-center">
-                                <span class="h6 mb-0 position-relative" data-tooltip="stakeholders are validating this block now.">proposed</span><br>
-                                <a class="d-inline-block h3 position-relative" href="/block/{{.Hash}}" data-target="homepage.blockHeight">{{.Height}}</a>
-                            </div>
-                            <div class="col-6 text-center">
-                                <span class="h6 position-relative" data-tooltip="total DCR sent in this block">value</span><br>
-                                <span class="h4" data-target="homepage.blockTotal">{{threeSigFigs .Total}}</span><span class="h6"> DCR</span>
-                            </div>
-                            <div class="col-6 text-center">
-                                <div class="d-flex align-items-baseline justify-content-center p-0 m-0">
-                                    <span class="h6 mr-2" data-tooltip="stakeholder's votes for the proposed block.">votes</span>
-                                    {{if eq $.Consensus -1}}
-                                    <span data-target="homepage.consensusMsg" class="small text-danger">rejected</span>
-                                    {{else if eq $.Consensus 0}}
-                                    <span data-target="homepage.consensusMsg" class="small"></span>
-                                    {{else}}
-                                    <span data-target="homepage.consensusMsg" class="small text-green">approved</span>
-                                    {{end}}
-                                </div>
-                                <div class="d-inline-block p1 h4" data-target="homepage.blockVotes" data-hash="{{.Hash}}">
-                                    {{range $index, $vote := $.BlockTally}}
-                                    <div
-                                    class="d-inline-block position-relative"
-                                    data-tooltip="{{if eq $vote -1}}the stakeholder has voted to reject this block{{else if eq $vote 1}}the stakeholder has voted to accept this block{{else}}this vote has not been received yet{{end}}"
-                                    >
-                                    <span class="dcricon-{{if eq $vote 0}}reject{{else if eq $vote 1}}affirm{{else}}missing{{end}}"></span>
-                                    </div>
-                                    {{end}}
-                                </div>
+
+                            <div class="col-24 col-sm-12 col-md-24 col-lg-12 row justify-content-between">
+                              <div class="col-12 text-center">
+                                  <span class="h6 mb-0 position-relative" data-tooltip="stakeholders are validating this block now.">proposed</span><br>
+                                  <a class="d-inline-block h3 position-relative" href="/block/{{.Hash}}" data-target="homepage.blockHeight">{{.Height}}</a>
+                              </div>
+                              <div class="col-12 text-center">
+                                  <span class="h6 position-relative" data-tooltip="total DCR sent in this block">value</span><br>
+                                  <span class="h4" data-target="homepage.blockTotal">{{threeSigFigs .Total}}</span><span class="h6"> DCR</span>
+                              </div>
                             </div>
 
-                            <div class="col-6 text-center">
-                                <span class="h6">size</span><br>
-                                <span class="h4" data-target="homepage.blockSize">{{.FormattedBytes}}</span>
+                            <div class="col-24 col-sm-12 col-md-24 col-lg-12 row justify-content-between">
+                              <div class="col-12 text-center">
+                                  <div class="d-inline-block">
+                                    <div class="d-flex align-items-baseline justify-content-between p-0 m-0">
+                                        <span class="h6 mr-2" data-tooltip="stakeholder's votes for the proposed block.">votes</span>
+                                        {{if eq $.Consensus -1}}
+                                          <span data-target="homepage.consensusMsg" class="small text-danger">rejected</span>
+                                        {{else if eq $.Consensus 0}}
+                                          <span data-target="homepage.consensusMsg" class="small"></span>
+                                        {{else}}
+                                          <span data-target="homepage.consensusMsg" class="small text-green">approved</span>
+                                        {{end}}
+                                    </div>
+                                    <div class="d-inline-block p1 h4 text-nowrap" data-target="homepage.blockVotes" data-hash="{{.Hash}}">
+                                        {{range $index, $vote := $.BlockTally}}
+                                        <div
+                                        class="d-inline-block position-relative"
+                                        data-tooltip="{{if eq $vote -1}}the stakeholder has voted to reject this block{{else if eq $vote 1}}the stakeholder has voted to accept this block{{else}}this vote has not been received yet{{end}}"
+                                        >
+                                        <span class="dcricon-{{if eq $vote 0}}reject{{else if eq $vote 1}}affirm{{else}}missing{{end}}"></span>
+                                        </div>
+                                        {{end}}
+                                    </div>
+                                  </div>
+                              </div>
+
+                              <div class="col-12 text-center">
+                                  <span class="h6">size</span><br>
+                                  <span class="h4" data-target="homepage.blockSize">{{.FormattedBytes}}</span>
+                              </div>
                             </div>
                             {{end}}
                         </div>
@@ -62,14 +70,14 @@
                             <div class="col">
                                 <table class="table w-100 mt-2 mx-auto mb-0">
                                     <thead>
-                                        <tr class="card-theader">
+                                        <tr>
                                             <th class="text-left pl-3">Height</th>
                                             <th><div class="position-relative text-center" data-tooltip="regular transactions">R</div></th>
                                             <th><div class="position-relative text-center" data-tooltip="votes">V</div></th>
                                             <th><div class="position-relative text-center" data-tooltip="tickets">T</div></th>
                                             <th><div class="position-relative text-center" data-tooltip="revocations">X</div></th>
                                             <th><div class="position-relative text-center" data-tooltip="total DCR sent">DCR</div></th>
-                                            <th class="d-none d-sm-table-cell d-md-none d-lg-table-cell"><div class="position-relative text-center">Size</div></th>
+                                            <th><div class="position-relative text-center">Size</div></th>
                                             <th class="text-right pr-3" data-target="time.header" data-jstitle="Age">Time ({{timezone}})</th>
                                         </tr>
                                     </thead>
@@ -82,7 +90,7 @@
                                             <td class="text-center" data-type="tickets">{{.FreshStake}}</td>
                                             <td class="text-center" data-type="revocations">{{.Revocations}}</td>
                                             <td class="text-center" data-type="value">{{threeSigFigs .Total}}</td>
-                                            <td class="text-center d-none d-sm-table-cell d-md-none d-lg-table-cell" data-type="value">{{.FormattedBytes}}</td>
+                                            <td class="text-center" data-type="value">{{.FormattedBytes}}</td>
                                             <td class="text-right pr-2" data-type="age" data-target="time.age" data-age="{{.BlockTime}}">{{.BlockTime}}</td>
                                         </tr>
                                         {{end}}
@@ -93,9 +101,9 @@
                         </div>
                     </div> <!-- end blocks card -->
 
-                    <div class="pt-1 pb-1 px-2 mb-2 bg-white mb-1">
+                    <div class="pt-1 pb-1 px-2 bg-white mx-1 my-2">
 
-                        <div class="d-flex align-items-baseline mb-2">
+                        <div class="d-flex align-items-baseline mb-2 px-2">
                             <div class="position-relative mt-1 p-2">
                                 <span class="card-icon dcricon-stack h1 mr-2"></span> <a href="/mempool" class="h3">Mempool</a>
                             </div>
@@ -119,15 +127,8 @@
                             </div>
                         </div>
 
-                        <div class="mx-2 jsonly text-nowrap d-flex">
-                            <div class="tx-gauge tx-regular rounded-left" data-target="homepage.mpRegBar"></div>
-                            <div class="tx-gauge tx-ticket" data-target="homepage.mpTicketBar"></div>
-                            <div class="tx-gauge tx-vote" data-target="homepage.mpVoteBar"></div>
-                            <div class="tx-gauge tx-rev rounded-right" data-target="homepage.mpRevBar"></div
-                        ></div>
-
                         <div class="row mb-2">
-                            <div class="col-md-8">
+                            <div class="col-sm-12 col-md-24 col-lg-12">
 
                                 <div class="d-flex justify-content-between align-items-center px-2 mx-auto">
                                     <div class="text-left my-3 pl-3 tx-bar tx-regular d-inline-block">
@@ -162,6 +163,13 @@
                                     </div>
                                 </div>
 
+                                <div class="mx-2 jsonly text-nowrap d-flex">
+                                    <div class="tx-gauge tx-regular rounded-left" data-target="homepage.mpRegBar"></div>
+                                    <div class="tx-gauge tx-ticket" data-target="homepage.mpTicketBar"></div>
+                                    <div class="tx-gauge tx-vote" data-target="homepage.mpVoteBar"></div>
+                                    <div class="tx-gauge tx-rev rounded-right" data-target="homepage.mpRevBar"></div
+                                ></div>
+
                                 <div class="d-flex justify-content-between align-items-center mx-auto px-2">
                                     <div class="text-left my-3 pl-3 tx-bar tx-ticket d-inline-block">
                                     <span data-target="homepage.mpTicketCount" class="h4">{{.Mempool.NumTickets}}</span>
@@ -188,11 +196,11 @@
 
                                 <table class="table w-100 mx-auto mb-0">
                                     <thead>
-                                    <tr class="card-theader">
+                                    <tr>
                                         <th class="text-left pl-2">Hash</th>
                                         <th>Type</th>
                                         <th>DCR</th>
-                                        <th class="d-none d-sm-table-cell d-md-none d-lg-table-cell">Size</th>
+                                        <th>Size</th>
                                         <th class="text-right pr-3 jsonly">Age</th>
                                     </tr>
                                     </thead>
@@ -206,7 +214,7 @@
                                         </td>
                                         <td>{{.Type}}</td>
                                         <td>{{threeSigFigs .TotalOut}}</td>
-                                        <td class="d-none d-sm-table-cell d-md-none d-lg-table-cell">{{.Size}} B</td>
+                                        <td>{{.Size}} B</td>
                                         <td class="text-right pr-3 jsonly" data-target="time.age" data-age="{{.Time}}"></td>
                                     </tr>
                                     {{end}}
@@ -223,7 +231,7 @@
 
                 {{with .Info}}
 
-                <div class="bg-white mb-1 py-2 px-3 mx-1 my-0">
+                <div class="bg-white py-2 px-3 mx-1 my-2">
                     <div class="my-3 h4">
                         <span class="dcricon-ticket d-inline-block pr-2 h3"></span>
                         Voting
@@ -311,7 +319,7 @@
                     </div>
                 </div> <!-- end voting card -->
 
-                <div class="bg-white mb-1 py-2 px-3 mx-1 my-0">
+                <div class="bg-white py-2 px-3 mx-1 my-2">
                     <div class="my-3 h4">
                         <span class="dcricon-pickaxe d-inline-block pr-2 h3"></span>
                         <span>Mining</span>
@@ -373,7 +381,7 @@
                     </div>
                 </div> <!-- end mining card -->
 
-                <div class="bg-white mb-1 p-2 mb-2 px-3 mx-1">
+                <div class="bg-white p-2 px-3 mx-1 my-2">
                     <div class="my-3 h4">
                         <span class="dcricon-tree d-inline-block pr-2 h4"></span>
                         Distribution
